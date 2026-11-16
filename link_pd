@@ -1,0 +1,27 @@
+# PD (planar diagram) codes of the two links that were used to identify
+# manifolds found by cycle3_scan.py as Dehn fillings.
+#
+# Each code is a list of crossings (a, b, c, d) in SnapPy/KnotTheory
+# convention.  Load one with SnapPy:
+#
+#     import snappy
+#     W = snappy.Link([(1,7,2,8),(3,10,4,9),(5,2,6,3),(8,5,9,4),(10,6,7,1)]).exterior()
+#     W.identify()          # -> m129, the Whitehead link complement (2 cusps)
+#     W.dehn_fill([(5, 1), (11, 1)])
+#
+#     F = snappy.Link([(2,7,3,8),(4,2,5,1),(6,3,7,4),(8,6,1,5)]).exterior()
+#     F.identify()          # -> m004, the figure-eight knot complement
+#     F.dehn_fill((5, 1))   # F8_5 in the notation of Sec. 3.4 (up to the
+#                           # surgery-slope / orientation convention)
+#
+# Filled manifolds can then be compared with the scan output, e.g.
+#     M.is_isometric_to(snappy.Manifold(isosig))
+#
+# In magma_group_iso_test.txt, π1 of the Whitehead link complement is
+# written as <x, y | [x, λ_x]> with longitude words λ_x, λ_y.
+
+Whitehead
+[(1,7,2,8),(3,10,4,9),(5,2,6,3),(8,5,9,4),(10,6,7,1)]
+
+Fig8
+[(2,7,3,8),(4,2,5,1),(6,3,7,4),(8,6,1,5)]

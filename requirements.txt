@@ -1,0 +1,3 @@
+regina>=7.3
+snappy
+numpy

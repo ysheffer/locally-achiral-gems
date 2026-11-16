@@ -1,0 +1,83 @@
+// magma_group_iso_test.txt -- Magma script (paste into Magma, or run with
+// `magma magma_group_iso_test.txt`).
+//
+// Purpose
+// -------
+// Identify a manifold found by the gem search (cycle3_scan.py, Sec. 3.3 of
+// arXiv:2606.18361) by comparing fundamental groups.  For closed, prime,
+// aspherical manifolds (e.g. hyperbolic ones), an isomorphism of fundamental
+// groups gives a homeomorphism (Theorem 3.5).
+//
+//   G2 : a 2-generator presentation of pi_1 of the candidate manifold from the
+//        gem search (e.g. as read off from the gem, Theorem 3.4).
+//        Its abelianisation is Z/55, the same as H_1 of the Whitehead
+//        fillings below.
+//
+//   G1(t) : pi_1 of a Dehn filling of the Whitehead link complement (see
+//        link_pd), written as the 2-bridge presentation
+//            <x, y | [x, la] = 1>
+//        with longitude words la (for x) and lb (for y).  Filling relations:
+//            x^5  * la   = 1      (slope 5/1 on the first component)
+//            y^11 * lb^t = 1      (slope 11/t on the second component)
+//
+// For t = 1..10 the script rules out non-isomorphic G1(t) by checking
+// abelian invariants and the number of subgroups of index <= 5.  For the
+// remaining t it runs Magma's SearchForIsomorphism, a bounded search
+// (depth 10).  "not found" is therefore inconclusive.
+
+// 1. Setup the Free Group
+F<x, y> := FreeGroup(2); // Use x, y for the Free Group to avoid collision
+comm := func<u, v | u*v*u^-1*v^-1>;
+
+// Define template words in the Free Group F
+la_word := comm(y, x) * comm(y^-1, x);
+lb_word := comm(y^-1, x) * comm(y^-1, x^-1);
+
+// 2. Define the target Group G2
+G2<a2, b2> := Group< a2, b2 | 
+    a2^2*b2^-1*a2^2*b2^-2*a2*b2^-2, 
+    a2*b2*a2*b2*a2*b2*a2*b2^-1*a2^2*b2^-1*a2*b2*a2*b2 >;
+
+G2s := Simplify(G2);
+inv_G2 := AbelianInvariants(AbelianQuotient(G2s));
+sub_G2 := #LowIndexSubgroups(G2s, 5);
+
+print "Target Group G2 Abelian Invariants:", inv_G2;
+
+// 3. Loop over the parameter t
+for t in [1..10] do
+    printf "\n--- Testing t = %o ---\n", t;
+    
+    // Define G1 using the words from F
+    // We don't assign generators here to avoid overwriting x, y
+    G1 := quo< F | 
+        comm(x, la_word) = 1, 
+        x^5 * la_word = 1, 
+        y^11 * lb_word^t = 1 >;
+    
+    G1s := Simplify(G1);
+    
+    // Check invariants
+    inv_G1 := AbelianInvariants(AbelianQuotient(G1s));
+    if inv_G1 ne inv_G2 then
+        printf "t = %o: Non-isomorphic (Abelian Invariants %o)\n", t, inv_G1;
+        continue;
+    end if;
+
+    if #LowIndexSubgroups(G1s, 5) ne sub_G2 then
+        printf "t = %o: Non-isomorphic (Subgroup counts differ)\n", t;
+        continue;
+    end if;
+
+    print "Potential match found. Running backtrack search...";
+    // Use a higher SearchDepth if t=1 failed but invariants matched
+    success, phi := SearchForIsomorphism(G1s, G2s, 10);
+    
+    if success then
+        print "SUCCESS! Isomorphism found for t =", t;
+        print "Mapping:", phi;
+        break;
+    else
+        print "Isomorphism not found within SearchDepth.";
+    end if;
+end for;
